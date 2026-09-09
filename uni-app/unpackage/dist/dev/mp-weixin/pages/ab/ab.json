@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "A/B 渲染校验",
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "canvas-avatar": "/components/canvas-avatar"
+  }
+}

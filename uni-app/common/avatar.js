@@ -121,7 +121,7 @@ export const CHARACTERS = {
   yu: { name: '小玉', desc: '纤细 · 甜美系', head: 1.00, sw: 0.94, ww: 0.90, hw: 1.00, h: 1.00, neck: 1.00, mouth: 'smile', lash: true,
     preset: { hair: 'long', hairColor: 1, skin: 1, eyeColor: 3, eyeShape: 'almond', items: { top: 't1', bottom: 'p1', shoes: 'sh1' } } },
   zhe: { name: '阿哲', desc: '阳光 · 运动系', head: 0.96, sw: 1.24, ww: 1.08, hw: 0.98, h: 1.05, neck: 1.18, mouth: 'grin', lash: false,
-    preset: { hair: 'spiky', hairColor: 0, skin: 2, eyeColor: 0, eyeShape: 'narrow', items: { top: 't2', bottom: 'p4', shoes: 'sh1' } } },
+    preset: { hair: 'short', hairColor: 0, skin: 2, eyeColor: 0, eyeShape: 'narrow', items: { top: 't2', bottom: 'p4', shoes: 'sh1' } } },
   yuan: { name: '圆圆', desc: '圆润 · 可爱系', head: 1.05, sw: 1.10, ww: 1.42, hw: 1.38, h: 0.96, neck: 1.05, mouth: 'happy', lash: true,
     preset: { hair: 'curly', hairColor: 4, skin: 0, eyeColor: 6, eyeShape: 'round', items: { dress: 'd1', shoes: 'sh4', necklace: 'n1' } } },
   man: { name: '小满', desc: '活泼 · 小不点', head: 1.28, sw: 0.80, ww: 0.82, hw: 0.85, h: 0.78, neck: 0.92, mouth: 'happy', lash: true, eyeBig: 1.28,
@@ -195,10 +195,8 @@ function pantsBase(b, o) {
   const c = o.c, dk = o.dk || shade(c, -0.2);
   const endY = o.len === 'short' ? hy + (kneeY - hy) * 0.5 : ankleY - 4;
   const w = o.slim ? legW + 2 : legW + 4.5;
-  let s = `<path d="M ${cx - wh - 3},${wy - 2} L ${cx + wh + 3},${wy - 2}
-    C ${cx + hh + 7},${hy + 1} ${cx + hh + 5},${hy + 15} ${cx + hh * 0.22},${hy + 19}
-    L ${cx - hh * 0.22},${hy + 19}
-    C ${cx - hh - 5},${hy + 15} ${cx - hh - 7},${hy + 1} ${cx - wh - 3},${wy - 2} Z" ${inked(c)}/>`;
+  let s = '';
+  // 腿带先画（在下），臀部后画（在上），让“长条(腿)位于偏圆形臀部下方”
   [-1, 1].forEach(sd => {
     const lx = legCenterX(b, sd, endY);
     s += limbPath(legPts(b, sd, endY), w, c);
@@ -207,6 +205,10 @@ function pantsBase(b, o) {
     if (o.cargoPockets)
       s += `<rect x="${lx - w * 0.38}" y="${(hy + kneeY) / 2 - 8}" width="${w * 0.76}" height="14" rx="3.5" fill="${dk}" opacity=".9" stroke="${INK}" stroke-width="1.4"/>`;
   });
+  s += `<path d="M ${cx - wh - 3},${wy - 2} L ${cx + wh + 3},${wy - 2}
+    C ${cx + hh + 7},${hy + 1} ${cx + hh + 5},${hy + 15} ${cx + hh * 0.22},${hy + 19}
+    L ${cx - hh * 0.22},${hy + 19}
+    C ${cx - hh - 5},${hy + 15} ${cx - hh - 7},${hy + 1} ${cx - wh - 3},${wy - 2} Z" ${inked(c)}/>`;
   s += `<rect x="${cx - wh - 3}" y="${wy - 2}" width="${(wh + 3) * 2}" height="7" rx="3" fill="${dk}" stroke="${INK}" stroke-width="1.8"/>`;
   if (o.belt) s += `<rect x="${cx - wh - 3.5}" y="${wy - 3}" width="${(wh + 3.5) * 2}" height="6" rx="3" fill="${o.belt}"/><rect x="${cx - 4}" y="${wy - 3.5}" width="8" height="7" rx="2" fill="${shade(o.belt, 0.3)}"/>`;
   return s;
@@ -327,7 +329,7 @@ function hairCap(b, c, opt) {
   const rx = hr * (opt.rx || 1.06), drop = opt.drop == null ? 0.12 : opt.drop;
   return `<path d="M ${cx - rx},${cy + hry * drop}
     C ${cx - rx - 3},${cy - hry * (opt.top || 1.16)} ${cx + rx + 3},${cy - hry * (opt.top || 1.16)} ${cx + rx},${cy + hry * drop}
-    C ${cx + rx * 0.55},${cy - hry * 0.4} ${cx - rx * 0.55},${cy - hry * 0.4} ${cx - rx},${cy + hry * drop} Z" fill="${c}" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    C ${cx + rx * 0.55},${cy - hry * 0.4} ${cx - rx * 0.55},${cy - hry * 0.4} ${cx - rx},${cy + hry * drop} Z" fill="${c}" stroke="none"/>`;
 }
 function sideLocks(b, c, len) {
   const { cx, cy, hr } = b, dk = shade(c, -0.15);
@@ -336,14 +338,27 @@ function sideLocks(b, c, len) {
     `<path d="M ${cx + sd * hr * 0.94},${cy} Q ${cx + sd * hr * 1.0},${cy + len * 0.45} ${cx + sd * hr * 0.85},${cy + len * 0.8}" stroke="${dk}" stroke-width="1.5" fill="none" opacity=".6"/>`
   ).join('');
 }
+
+/* 完整头发帽：盖住整个头顶到眉毛（贴合头型、不越顶、不露头皮、不方） */
+function fringeSVG(b, c, o) {
+  o = o || {};
+  const { cx, cy, hr, hry } = b;
+  const rx = hr * (o.rx || 1.0);
+  const ey = cy - hry * (o.bottom || 0.04);   // 眉毛线
+  const top = cy - hry * (o.top || 0.99);     // 头顶（略低于头顶，避免凸起）
+  const drop = cy + hry * (o.drop || 0.04);   // 底缘弧下垂点（仍高于眼睛）
+  let d = `M ${(cx - rx).toFixed(1)},${ey.toFixed(1)}`;
+  d += ` C ${(cx - rx).toFixed(1)},${(cy - hry * 0.55).toFixed(1)} ${(cx - rx * 0.6).toFixed(1)},${top.toFixed(1)} ${cx},${top.toFixed(1)}`;
+  d += ` C ${(cx + rx * 0.6).toFixed(1)},${top.toFixed(1)} ${(cx + rx).toFixed(1)},${(cy - hry * 0.55).toFixed(1)} ${(cx + rx).toFixed(1)},${ey.toFixed(1)}`;
+  d += ` Q ${cx},${drop.toFixed(1)} ${(cx - rx).toFixed(1)},${ey.toFixed(1)} Z`;
+  return `<path d="${d}" fill="${o.fill || c}"/>`;
+}
 export const HAIRSTYLES = {
   short: {
     name: '清爽短发',
     back(b, c) { return hairCap(b, c, { rx: 1.04 }); },
     front(b, c) {
-      const { cx, cy, hr, hry } = b;
-      return hairCap(b, c) + sideLocks(b, c, 26 * b.fs) +
-        `<path d="M ${cx - hr * 0.55},${cy - hry * 0.42} Q ${cx - hr * 0.3},${cy - hry * 0.1} ${cx - hr * 0.05},${cy - hry * 0.4}" stroke="${shade(c, -0.2)}" stroke-width="1.6" fill="none" opacity=".5"/>`;
+      return hairCap(b, c) + sideLocks(b, c, 26 * b.fs);
     }
   },
   long: {
@@ -357,8 +372,7 @@ export const HAIRSTYLES = {
         C ${cx - hr * 1.05},${y1 - 38 * fs} ${cx - hr * 1.14},${cy + 55 * fs} ${cx - hr * 1.06},${cy + hry * 0.2} Z" fill="${c}" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>`;
     },
     front(b, c) {
-      return hairCap(b, c) + sideLocks(b, c, 84 * b.fs) +
-        `<path d="M ${b.cx - b.hr * 0.5},${b.cy - b.hry * 0.45} Q ${b.cx},${b.cy - b.hry * 0.12} ${b.cx + b.hr * 0.5},${b.cy - b.hry * 0.45}" stroke="${shade(c, -0.22)}" stroke-width="1.8" fill="none" opacity=".55"/>`;
+      return hairCap(b, c) + sideLocks(b, c, 84 * b.fs);
     }
   },
   twin: {
@@ -391,9 +405,7 @@ export const HAIRSTYLES = {
         `<circle cx="${cx + 2}" cy="${y0 + 3}" r="6" fill="${shade(c, -0.3)}"/>`;
     },
     front(b, c) {
-      const { cx, cy, hr, hry } = b;
-      return hairCap(b, c, { drop: 0.05, top: 1.1 }) +
-        `<path d="M ${cx - hr * 0.85},${cy - hry * 0.36} Q ${cx - hr * 0.3},${cy - hry * 0.06} ${cx + hr * 0.25},${cy - hry * 0.3}" stroke="${shade(c, -0.22)}" stroke-width="1.6" fill="none" opacity=".5"/>`;
+      return hairCap(b, c, { drop: 0.05, top: 1.1 });
     }
   },
   bob: {
@@ -449,19 +461,6 @@ export const HAIRSTYLES = {
     back(b, c) { return ''; },
     front(b, c) { return hairCap(b, c, { drop: -0.1, top: 1.02, rx: 1.01 }); }
   },
-  spiky: {
-    name: '炫酷刺猬',
-    back(b, c) { return ''; },
-    front(b, c) {
-      const { cx, cy, hr, hry } = b;
-      let s = hairCap(b, c, { drop: -0.06, top: 1.0 });
-      const peaks = [[-0.9, -0.75, -0.55, -1.25], [-0.45, -0.95, -0.1, -1.5], [0.15, -1.0, 0.5, -1.45], [0.6, -0.85, 0.95, -1.2]];
-      peaks.forEach(([x0, y0, x1, y1]) => {
-        s += `<path d="M ${cx + x0 * hr},${cy + y0 * hry} L ${cx + x1 * hr},${cy + y1 * hry} L ${cx + (x1 + 0.18) * hr},${cy + (y0 + 0.05) * hry} Z" fill="${c}"/>`;
-      });
-      return s;
-    }
-  },
   wavy: {
     name: '浪漫长卷发',
     back(b, c) {
@@ -498,6 +497,42 @@ export const HAIRSTYLES = {
       const { cx, cy, hr, hry } = b;
       return hairCap(b, c, { drop: 0.1 }) +
         `<path d="M ${cx - hr * 0.06},${cy - hry * 1.05} L ${cx - hr * 0.06},${cy - hry * 0.4}" stroke="${shade(c, -0.3)}" stroke-width="2" opacity=".7"/>`;
+    }
+  },
+  singlebraid: {
+    name: '单麻花辫',
+    // 短发为底，一条麻花辫垂在头侧
+    back(b, c) {
+      const { cx, cy, hr, hry, fs } = b;
+      let s = hairCap(b, c, { rx: 1.04 });
+      const x = cx - (hr * 1.0 + 2);
+      const n = 5, startY = cy + 4;
+      for (let i = 0; i < n; i++) {
+        const r = (9 - i * 1.1) * fs, y = startY + i * 11 * fs;
+        s += `<circle cx="${x + (i % 2 ? 2.5 : -2.5) * fs}" cy="${y}" r="${r}" fill="${i % 2 ? shade(c, 0.1) : c}"/>`;
+      }
+      s += `<path d="M ${x},${startY + n * 11 * fs - 6} L ${x + 3 * fs},${startY + n * 11 * fs + 9}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` +
+        `<circle cx="${x}" cy="${startY}" r="4" fill="${shade(c, -0.3)}"/>`;
+      return s;
+    },
+    front(b, c) {
+      return hairCap(b, c) + sideLocks(b, c, 26 * b.fs);
+    }
+  },
+  wolfcut: {
+    name: '狼尾',
+    // 短发为前发，后发留长到肩（约与高马尾等长）
+    back(b, c) {
+      const { cx, cy, hr, hry, fs } = b;
+      const y1 = b.shoulderY + 8 * fs;
+      return `<path d="M ${cx - hr * 0.94},${cy + hry * 0.15}
+        C ${cx - hr * 1.04},${cy - hry * 0.5} ${cx - hr * 0.86},${cy - hry * 1.0} ${cx},${cy - hry * 0.98}
+        C ${cx + hr * 0.86},${cy - hry * 1.0} ${cx + hr * 1.04},${cy - hry * 0.5} ${cx + hr * 0.94},${cy + hry * 0.15}
+        L ${cx + hr * 0.5},${y1} L ${cx - hr * 0.5},${y1} Z" fill="${c}" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>` +
+        `<path d="M ${cx - hr * 0.6},${cy - hry * 0.1} L ${cx - hr * 0.32},${y1 + 2} L ${cx},${y1 + 8} L ${cx + hr * 0.32},${y1 + 2} L ${cx + hr * 0.6},${cy - hry * 0.1} Q ${cx},${cy + hry * 0.3} ${cx - hr * 0.6},${cy - hry * 0.1} Z" fill="${shade(c, -0.12)}" opacity=".85"/>`;
+    },
+    front(b, c) {
+      return hairCap(b, c) + sideLocks(b, c, 34 * b.fs);
     }
   },
 };
@@ -622,9 +657,14 @@ I('hw4', 'headwear', '喵喵猫耳', ['cute', 'cool'], ['#4a4a58'], b => {
 });
 I('hw5', 'headwear', '星空耳机', ['cool', 'sporty'], ['#2e2e3e'], b => {
   const { cx, cy, hr, hry, fs } = b;
-  return `<path d="M ${cx - hr * 1.08},${cy + 4 * fs} A ${hr * 1.08} ${hry * 1.06} 0 0 1 ${cx + hr * 1.08},${cy + 4 * fs}" stroke="#2e2e3e" stroke-width="${6 * fs}" fill="none"/>` +
-    [-1, 1].map(sd => `<rect x="${cx + sd * hr * 1.08 - 6 * fs}" y="${cy - 4 * fs}" width="${12 * fs}" height="${24 * fs}" rx="${6 * fs}" fill="#2e2e3e"/>` +
-      `<rect x="${cx + sd * hr * 1.08 - 3.5 * fs}" y="${cy - 1 * fs}" width="${7 * fs}" height="${18 * fs}" rx="${3.5 * fs}" fill="#a78bfa"/>`).join('');
+  // 去掉贯顶的黑色“头带”大弧（fill=none 只有描边，长发时耳罩被盖住只剩孤悬黑月牙，很难看）。
+  // 这里只保留两侧耳罩作为“头戴式耳机”，即使长发盖住也只是一件低调的配饰，不再出现黑色月牙。
+  const ey = cy + hry * 0.16;
+  return [-1, 1].map(sd => {
+    const x = cx + sd * hr * 1.06;
+    return `<rect x="${x - 6.5 * fs}" y="${ey - 12 * fs}" width="${13 * fs}" height="${26 * fs}" rx="${6.5 * fs}" fill="#2e2e3e" stroke="#1b1b24" stroke-width="1.2"/>` +
+      `<rect x="${x - 4 * fs}" y="${ey - 9 * fs}" width="${8 * fs}" height="${18 * fs}" rx="${4 * fs}" fill="#a78bfa"/>`;
+  }).join('');
 });
 
 /* 耳饰 5 */
@@ -826,14 +866,14 @@ export function avatarSVG(cfg, opts) {
   const draw = id => ITEM_MAP[id] ? ITEM_MAP[id].draw(b) : '';
   const hair = HAIRSTYLES[cfg.hair];
   const hairBack = hair ? hair.back(b, hairC) : '';
-  const hairFront = hair ? hair.front(b, hairC) : '';
+  const hairFront = hair ? fringeSVG(b, hairC) + hair.front(b, hairC) : '';
   const layers = [
     ['hairback', hairBack],
     ['legs', bodySVG(b, skin)],
-    ['shoes', it.shoes ? draw(it.shoes) : ''],
     ['bottom', it.bottom ? draw(it.bottom) : (it.skirt ? draw(it.skirt) : '')],
     ['dress', it.dress ? draw(it.dress) : ''],
     ['top', it.top ? draw(it.top) : ''],
+    ['shoes', it.shoes ? draw(it.shoes) : ''],
     ['necklace', it.necklace ? draw(it.necklace) : ''],
     ['head', headSVG(b, cfg, skin, hairC)],
     ['hairfront', hairFront],
@@ -882,18 +922,43 @@ export function eyeShapeThumbSVG(shapeId) {
 }
 
 /* ---------- SVG 字符串 → base64 data URI（供 <image> 使用） ---------- */
+const B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+/* 纯 JS base64：字节数组 → base64 字符串（不依赖 btoa，兼容小程序运行时） */
+function _b64FromBytes(bytes) {
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const a = bytes[i];
+    const b = i + 1 < bytes.length ? bytes[i + 1] : NaN;
+    const c = i + 2 < bytes.length ? bytes[i + 2] : NaN;
+    out += B64_CHARS[a >> 2];
+    out += B64_CHARS[((a & 3) << 4) | (b >= 0 ? b >> 4 : 0)];
+    out += isNaN(b) ? '=' : B64_CHARS[((b & 15) << 2) | (c >= 0 ? c >> 6 : 0)];
+    out += isNaN(c) ? '=' : B64_CHARS[c & 63];
+  }
+  return out;
+}
+
 export function svgToDataUri(svg) {
   // SVG 实际为 ASCII/含少量转义，这里用 encodeURIComponent 以稳妥处理任意字符
   const b64 = _btoaUnicode(svg);
   return 'data:image/svg+xml;base64,' + b64;
 }
 function _btoaUnicode(str) {
-  if (typeof btoa === 'function' && typeof unescape === 'function') {
-    return btoa(unescape(encodeURIComponent(str))); // 稳妥处理任意字符
+  if (typeof btoa === 'function') {
+    try {
+      // 稳妥处理任意字符
+      if (typeof unescape === 'function') return btoa(unescape(encodeURIComponent(str)));
+      return btoa(str); // SVG 均为 ASCII 时的快捷路径
+    } catch (e) { /* 落到下方纯 JS 实现 */ }
   }
-  if (typeof btoa === 'function') return btoa(str); // SVG 均为 ASCII 时的快捷路径
-  // 兜底（无 btoa 环境，如部分小程序运行时）
-  let binary = '';
-  for (let i = 0; i < str.length; i++) binary += String.fromCharCode(str.charCodeAt(i) & 0xff);
-  return binary;
+  // 兜底（无 btoa 环境，如小程序运行时）：UTF-8 编码为字节后自行 base64
+  const enc = encodeURIComponent(str);
+  const bytes = [];
+  for (let i = 0; i < enc.length; i++) {
+    const ch = enc[i];
+    if (ch === '%') { bytes.push(parseInt(enc.substr(i + 1, 2), 16)); i += 2; }
+    else bytes.push(ch.charCodeAt(0));
+  }
+  return _b64FromBytes(bytes);
 }
