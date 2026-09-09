@@ -2,7 +2,7 @@
    互斥规则、每类可选列表、搭配评分、成就定义与判定。
    从原 web-prototype 的 app.js / features.js 移植。
 */
-import { CHARACTERS, ITEMS, ITEM_MAP, HAIRSTYLES, EYESHAPES, HAIRCOLORS, EYECOLORS, TAG_NAMES } from './avatar.js';
+import { CHARACTERS, ITEMS, ITEM_MAP, HAIRSTYLES, EYESHAPES } from './avatar.js';
 
 export const MAX_OUTFITS = 8;
 
@@ -23,11 +23,6 @@ export function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 export function defaultCfg(charId) {
   const c = deepClone(CHARACTERS[charId].preset);
   return Object.assign({ charId, items: {} }, c, { items: c.items || {} });
-}
-
-export function getChoiceThumb(kind, id) {
-  // 供 UI 缩略图使用：items -> itemThumbSVG，hair -> hairThumbSVG，eyeShape -> eyeShapeThumbSVG
-  // 由调用方（index.vue）处理，这里保留接口说明
 }
 
 /* ---------- 颜色工具（评分用） ---------- */
@@ -166,11 +161,9 @@ export function trackTry(achState, cat, id) {
   }
 }
 
-export const TAG_NAME = (t) => TAG_NAMES[t] || t;
 export function itemName(id) { return ITEM_MAP[id] ? ITEM_MAP[id].name : id; }
 export function catCountOfItems(cat) { return (ITEMS_BY_CAT[cat] || []).length; }
 export function getItemsByCat(cat) { return ITEMS_BY_CAT[cat] || []; }
 export function countHair() { return Object.keys(HAIRSTYLES).length; }
 export function countEyes() { return EYESHAPES.length; }
 export function countChars() { return Object.keys(CHARACTERS).length; }
-export { HAIRCOLORS, EYECOLORS, EYESHAPES };
