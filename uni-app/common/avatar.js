@@ -121,7 +121,7 @@ export const CHARACTERS = {
   yu: { name: '小玉', desc: '纤细 · 甜美系', head: 1.00, sw: 0.94, ww: 0.90, hw: 1.00, h: 1.00, neck: 1.00, mouth: 'smile', lash: true,
     preset: { hair: 'long', hairColor: 1, skin: 1, eyeColor: 3, eyeShape: 'almond', items: { top: 't1', bottom: 'p1', shoes: 'sh1' } } },
   zhe: { name: '阿哲', desc: '阳光 · 运动系', head: 0.96, sw: 1.24, ww: 1.08, hw: 0.98, h: 1.05, neck: 1.18, mouth: 'grin', lash: false,
-    preset: { hair: 'spiky', hairColor: 0, skin: 2, eyeColor: 0, eyeShape: 'narrow', items: { top: 't2', bottom: 'p4', shoes: 'sh1' } } },
+    preset: { hair: 'short', hairColor: 0, skin: 2, eyeColor: 0, eyeShape: 'narrow', items: { top: 't2', bottom: 'p4', shoes: 'sh1' } } },
   yuan: { name: '圆圆', desc: '圆润 · 可爱系', head: 1.05, sw: 1.10, ww: 1.42, hw: 1.38, h: 0.96, neck: 1.05, mouth: 'happy', lash: true,
     preset: { hair: 'curly', hairColor: 4, skin: 0, eyeColor: 6, eyeShape: 'round', items: { dress: 'd1', shoes: 'sh4', necklace: 'n1' } } },
   man: { name: '小满', desc: '活泼 · 小不点', head: 1.28, sw: 0.80, ww: 0.82, hw: 0.85, h: 0.78, neck: 0.92, mouth: 'happy', lash: true, eyeBig: 1.28,
@@ -195,10 +195,8 @@ function pantsBase(b, o) {
   const c = o.c, dk = o.dk || shade(c, -0.2);
   const endY = o.len === 'short' ? hy + (kneeY - hy) * 0.5 : ankleY - 4;
   const w = o.slim ? legW + 2 : legW + 4.5;
-  let s = `<path d="M ${cx - wh - 3},${wy - 2} L ${cx + wh + 3},${wy - 2}
-    C ${cx + hh + 7},${hy + 1} ${cx + hh + 5},${hy + 15} ${cx + hh * 0.22},${hy + 19}
-    L ${cx - hh * 0.22},${hy + 19}
-    C ${cx - hh - 5},${hy + 15} ${cx - hh - 7},${hy + 1} ${cx - wh - 3},${wy - 2} Z" ${inked(c)}/>`;
+  let s = '';
+  // 腿带先画（在下），臀部后画（在上），让“长条(腿)位于偏圆形臀部下方”
   [-1, 1].forEach(sd => {
     const lx = legCenterX(b, sd, endY);
     s += limbPath(legPts(b, sd, endY), w, c);
@@ -207,6 +205,10 @@ function pantsBase(b, o) {
     if (o.cargoPockets)
       s += `<rect x="${lx - w * 0.38}" y="${(hy + kneeY) / 2 - 8}" width="${w * 0.76}" height="14" rx="3.5" fill="${dk}" opacity=".9" stroke="${INK}" stroke-width="1.4"/>`;
   });
+  s += `<path d="M ${cx - wh - 3},${wy - 2} L ${cx + wh + 3},${wy - 2}
+    C ${cx + hh + 7},${hy + 1} ${cx + hh + 5},${hy + 15} ${cx + hh * 0.22},${hy + 19}
+    L ${cx - hh * 0.22},${hy + 19}
+    C ${cx - hh - 5},${hy + 15} ${cx - hh - 7},${hy + 1} ${cx - wh - 3},${wy - 2} Z" ${inked(c)}/>`;
   s += `<rect x="${cx - wh - 3}" y="${wy - 2}" width="${(wh + 3) * 2}" height="7" rx="3" fill="${dk}" stroke="${INK}" stroke-width="1.8"/>`;
   if (o.belt) s += `<rect x="${cx - wh - 3.5}" y="${wy - 3}" width="${(wh + 3.5) * 2}" height="6" rx="3" fill="${o.belt}"/><rect x="${cx - 4}" y="${wy - 3.5}" width="8" height="7" rx="2" fill="${shade(o.belt, 0.3)}"/>`;
   return s;
@@ -336,6 +338,21 @@ function sideLocks(b, c, len) {
     `<path d="M ${cx + sd * hr * 0.94},${cy} Q ${cx + sd * hr * 1.0},${cy + len * 0.45} ${cx + sd * hr * 0.85},${cy + len * 0.8}" stroke="${dk}" stroke-width="1.5" fill="none" opacity=".6"/>`
   ).join('');
 }
+
+/* 完整头发帽：盖住整个头顶到眉毛（贴合头型、不越顶、不露头皮、不方） */
+function fringeSVG(b, c, o) {
+  o = o || {};
+  const { cx, cy, hr, hry } = b;
+  const rx = hr * (o.rx || 1.0);
+  const ey = cy - hry * (o.bottom || 0.04);   // 眉毛线
+  const top = cy - hry * (o.top || 0.99);     // 头顶（略低于头顶，避免凸起）
+  const drop = cy + hry * (o.drop || 0.04);   // 底缘弧下垂点（仍高于眼睛）
+  let d = `M ${(cx - rx).toFixed(1)},${ey.toFixed(1)}`;
+  d += ` C ${(cx - rx).toFixed(1)},${(cy - hry * 0.55).toFixed(1)} ${(cx - rx * 0.6).toFixed(1)},${top.toFixed(1)} ${cx},${top.toFixed(1)}`;
+  d += ` C ${(cx + rx * 0.6).toFixed(1)},${top.toFixed(1)} ${(cx + rx).toFixed(1)},${(cy - hry * 0.55).toFixed(1)} ${(cx + rx).toFixed(1)},${ey.toFixed(1)}`;
+  d += ` Q ${cx},${drop.toFixed(1)} ${(cx - rx).toFixed(1)},${ey.toFixed(1)} Z`;
+  return `<path d="${d}" fill="${o.fill || c}"/>`;
+}
 export const HAIRSTYLES = {
   short: {
     name: '清爽短发',
@@ -449,19 +466,6 @@ export const HAIRSTYLES = {
     back(b, c) { return ''; },
     front(b, c) { return hairCap(b, c, { drop: -0.1, top: 1.02, rx: 1.01 }); }
   },
-  spiky: {
-    name: '炫酷刺猬',
-    back(b, c) { return ''; },
-    front(b, c) {
-      const { cx, cy, hr, hry } = b;
-      let s = hairCap(b, c, { drop: -0.06, top: 1.0 });
-      const peaks = [[-0.9, -0.75, -0.55, -1.25], [-0.45, -0.95, -0.1, -1.5], [0.15, -1.0, 0.5, -1.45], [0.6, -0.85, 0.95, -1.2]];
-      peaks.forEach(([x0, y0, x1, y1]) => {
-        s += `<path d="M ${cx + x0 * hr},${cy + y0 * hry} L ${cx + x1 * hr},${cy + y1 * hry} L ${cx + (x1 + 0.18) * hr},${cy + (y0 + 0.05) * hry} Z" fill="${c}"/>`;
-      });
-      return s;
-    }
-  },
   wavy: {
     name: '浪漫长卷发',
     back(b, c) {
@@ -498,6 +502,47 @@ export const HAIRSTYLES = {
       const { cx, cy, hr, hry } = b;
       return hairCap(b, c, { drop: 0.1 }) +
         `<path d="M ${cx - hr * 0.06},${cy - hry * 1.05} L ${cx - hr * 0.06},${cy - hry * 0.4}" stroke="${shade(c, -0.3)}" stroke-width="2" opacity=".7"/>`;
+    }
+  },
+  singlebraid: {
+    name: '单麻花辫',
+    // 短发为底，一条麻花辫垂在头侧
+    back(b, c) {
+      const { cx, cy, hr, hry, fs } = b;
+      let s = hairCap(b, c, { rx: 1.04 });
+      const x = cx - (hr * 1.0 + 2);
+      const n = 5, startY = cy + 4;
+      for (let i = 0; i < n; i++) {
+        const r = (9 - i * 1.1) * fs, y = startY + i * 11 * fs;
+        s += `<circle cx="${x + (i % 2 ? 2.5 : -2.5) * fs}" cy="${y}" r="${r}" fill="${i % 2 ? shade(c, 0.1) : c}"/>`;
+      }
+      s += `<path d="M ${x},${startY + n * 11 * fs - 6} L ${x + 3 * fs},${startY + n * 11 * fs + 9}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` +
+        `<circle cx="${x}" cy="${startY}" r="4" fill="${shade(c, -0.3)}"/>`;
+      return s;
+    },
+    front(b, c) {
+      const { cx, cy, hr, hry, fs } = b;
+      return hairCap(b, c) + sideLocks(b, c, 26 * fs) +
+        `<path d="M ${cx - hr * 0.55},${cy - hry * 0.42} Q ${cx - hr * 0.3},${cy - hry * 0.1} ${cx - hr * 0.05},${cy - hry * 0.4}" stroke="${shade(c, -0.2)}" stroke-width="1.6" fill="none" opacity=".5"/>`;
+    }
+  },
+  wolfcut: {
+    name: '狼尾',
+    // 短发为前发，后发留长到肩（约与高马尾等长）
+    back(b, c) {
+      const { cx, cy, hr, hry, fs } = b;
+      const y1 = b.shoulderY + 8 * fs;
+      return `<path d="M ${cx - hr * 0.94},${cy + hry * 0.15}
+        C ${cx - hr * 1.04},${cy - hry * 0.5} ${cx - hr * 0.86},${cy - hry * 1.0} ${cx},${cy - hry * 0.98}
+        C ${cx + hr * 0.86},${cy - hry * 1.0} ${cx + hr * 1.04},${cy - hry * 0.5} ${cx + hr * 0.94},${cy + hry * 0.15}
+        L ${cx + hr * 0.5},${y1} L ${cx - hr * 0.5},${y1} Z" fill="${c}" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>` +
+        `<path d="M ${cx - hr * 0.6},${cy - hry * 0.1} L ${cx - hr * 0.32},${y1 + 2} L ${cx},${y1 + 8} L ${cx + hr * 0.32},${y1 + 2} L ${cx + hr * 0.6},${cy - hry * 0.1} Q ${cx},${cy + hry * 0.3} ${cx - hr * 0.6},${cy - hry * 0.1} Z" fill="${shade(c, -0.12)}" opacity=".85"/>`;
+    },
+    front(b, c) {
+      const { cx, cy, hr, hry, fs } = b;
+      let s = hairCap(b, c) + sideLocks(b, c, 34 * fs);
+      s += `<path d="M ${cx - hr * 0.55},${cy - hry * 0.42} Q ${cx - hr * 0.3},${cy - hry * 0.1} ${cx - hr * 0.05},${cy - hry * 0.4}" stroke="${shade(c, -0.2)}" stroke-width="1.6" fill="none" opacity=".5"/>`;
+      return s;
     }
   },
 };
@@ -826,14 +871,14 @@ export function avatarSVG(cfg, opts) {
   const draw = id => ITEM_MAP[id] ? ITEM_MAP[id].draw(b) : '';
   const hair = HAIRSTYLES[cfg.hair];
   const hairBack = hair ? hair.back(b, hairC) : '';
-  const hairFront = hair ? hair.front(b, hairC) : '';
+  const hairFront = hair ? fringeSVG(b, hairC) + hair.front(b, hairC) : '';
   const layers = [
     ['hairback', hairBack],
     ['legs', bodySVG(b, skin)],
-    ['shoes', it.shoes ? draw(it.shoes) : ''],
     ['bottom', it.bottom ? draw(it.bottom) : (it.skirt ? draw(it.skirt) : '')],
     ['dress', it.dress ? draw(it.dress) : ''],
     ['top', it.top ? draw(it.top) : ''],
+    ['shoes', it.shoes ? draw(it.shoes) : ''],
     ['necklace', it.necklace ? draw(it.necklace) : ''],
     ['head', headSVG(b, cfg, skin, hairC)],
     ['hairfront', hairFront],

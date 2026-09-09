@@ -1,5 +1,8 @@
 <template>
   <view class="page">
+    <!-- 背景图 -->
+    <image class="bg" src="@/material/background.png" mode="aspectFill" />
+
     <!-- ============ 顶部栏 ============ -->
     <view class="topbar">
       <view class="brand">
@@ -630,10 +633,11 @@ export default {
 </script>
 
 <style scoped>
-.page { height: 100vh; display: flex; flex-direction: column; background: linear-gradient(160deg, #fff5f9 0%, #f0ecff 55%, #e7f7ff 100%); overflow: hidden; }
+.page { position: relative; height: 100vh; display: flex; flex-direction: column; background: #fff5f9; overflow: hidden; }
+.bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
 
 /* 顶栏 */
-.topbar { display: flex; align-items: center; padding: 14px 18px; background: rgba(255,255,255,.72); backdrop-filter: blur(6px); box-shadow: 0 2px 12px rgba(120,80,150,.08); gap: 14px; flex-wrap: wrap; }
+.topbar { position: relative; z-index: 1; display: flex; align-items: center; padding: 14px 18px; background: rgba(255,255,255,.72); backdrop-filter: blur(6px); box-shadow: 0 2px 12px rgba(120,80,150,.08); gap: 14px; flex-wrap: wrap; }
 .brand { display: flex; align-items: baseline; gap: 6px; }
 .brand-emoji { font-size: 22px; }
 .brand-name { font-size: 20px; font-weight: 800; color: #5a2e6d; }
@@ -646,7 +650,7 @@ export default {
 .cloud-status.off { background: #ffe9e3; color: #d06a4a; }
 
 /* 主体 */
-.main { flex: 1; display: flex; min-height: 0; }
+.main { position: relative; z-index: 1; flex: 1; display: flex; min-height: 0; }
 .rail { width: 208px; background: rgba(255,255,255,.5); border-right: 1px solid rgba(180,150,200,.2); padding: 8px 6px; box-sizing: border-box; flex-shrink: 0; }
 .rail-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 12px; margin-bottom: 2px; cursor: pointer; }
 .rail-item.active { background: linear-gradient(135deg,#ffd6e8,#d9c8ff); box-shadow: 0 2px 6px rgba(200,160,240,.2); }
