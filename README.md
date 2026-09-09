@@ -5,10 +5,10 @@
 | 目录 | 说明 |
 | --- | --- |
 | `web-prototype/` | **原始浏览器原型**（纯 DOM/SVG，直接双击 `index` 需本地起 HTTP 服务）。原 `app.js / data.js / render.js / features.js / style.css` 均保留于此。 |
-| `uni-app/` | **uni-app 版**（Vue2 单页），保留完整玩法，角色用现有 SVG 代码渲染到 `<image>`。H5 / App 端可跑。 |
+| `uni-app/` | **uni-app 版**（Vue2 单页），保留完整玩法，角色用现有 SVG 代码渲染到 `<image>`（H5/App）或 `<canvas type="2d">`（微信小程序）。H5 / App / mp-weixin 均可运行。 |
 | `backend/` | **FastAPI 后端**：云存档同步 + 成就/统计。 |
 
-> 说明：因为微信小程序端 `<image>`/`cover-image` 不支持 SVG，而本作全部视觉均为程序化 SVG，因此 **uni-app 版以 H5（浏览器）/ App 为目标运行**，可做到视觉 100% 还原、改动最小。若要上微信小程序，需把渲染层换成 Canvas（见各 README 的后续指引）。
+> 说明：H5 / App 端用 SVG `<image>`（视觉 100% 还原、改动最小）；微信小程序端 `<image>` 对 SVG data-URI 支持不可靠（真机亦无 `btoa`），因此 mp-weixin 走内置 Canvas 渲染层（`svg2canvas.js` + canvas 组件），同一份 `avatarSVG` 几何。运行与注意事项见 [`uni-app/README.md`](uni-app/README.md)。
 
 ---
 

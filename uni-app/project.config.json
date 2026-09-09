@@ -1,6 +1,4 @@
 {
-  "compileType": "miniprogram",
-  "miniprogramRoot": "uni-app/unpackage/dist/dev/mp-weixin/",
   "setting": {
     "es6": true,
     "postcss": true,
@@ -16,6 +14,7 @@
     "useCompilerPlugins": false,
     "minifyWXML": true
   },
+  "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [],

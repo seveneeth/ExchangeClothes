@@ -1,7 +1,7 @@
 <template>
   <view class="page">
-    <!-- 背景图 -->
-    <image class="bg" src="@/material/background.png" mode="aspectFill" />
+    <!-- 背景图（static/ 会打进微信小程序包；/static/ 路径 H5 与 mp-weixin 均可用） -->
+    <image class="bg" src="/static/background.png" mode="aspectFill" />
 
     <!-- ============ 顶部栏 ============ -->
     <view class="topbar">
@@ -23,8 +23,9 @@
     <!-- ============ 主体：左侧分类 + 右侧内容 ============ -->
     <view class="main">
       <!-- 分类栏 -->
+      <!-- #ifndef MP-WEIXIN -->
       <scroll-view scroll-y class="rail">
-        <view v-for="(c, i) in railList" :key="c.id || ('sep'+i)" class="rail-item"
+        <view v-for="c in railList" :key="c._k" class="rail-item"
               :class="{ active: c.id && cat === c.id, sep: !!c.sep }"
               @tap="c.id && selectCat(c.id)">
           <block v-if="c.id">
@@ -35,13 +36,34 @@
           <text v-else class="rail-sep">{{ c.sep }}</text>
         </view>
       </scroll-view>
+      <!-- #endif -->
+      <!-- #ifdef MP-WEIXIN -->
+      <!-- 手机端：分类改为顶部横向滑动 -->
+      <scroll-view scroll-x class="rail mp-rail">
+        <view v-for="c in railList" :key="c._k" class="rail-item"
+              :class="{ active: c.id && cat === c.id, sep: !!c.sep }"
+              @tap="c.id && selectCat(c.id)">
+          <block v-if="c.id">
+            <text class="rail-ico">{{ c.icon }}</text>
+            <text class="rail-name">{{ c.name }}</text>
+            <text class="rail-count">{{ c.count }}</text>
+          </block>
+          <text v-else class="rail-sep">{{ c.sep }}</text>
+        </view>
+      </scroll-view>
+      <!-- #endif -->
 
       <!-- 内容区 -->
       <view class="content">
         <!-- 舞台区 -->
         <view class="stage-panel">
           <view class="stage-wrap">
+            <!-- #ifndef MP-WEIXIN -->
             <image v-if="avatarUri" class="avatar" :src="avatarUri" mode="widthFix" />
+            <!-- #endif -->
+            <!-- #ifdef MP-WEIXIN -->
+            <canvas-avatar v-if="cfg" class="avatar" :cfg="cfg" :width="300" :height="525" />
+            <!-- #endif -->
             <view class="floor"></view>
           </view>
           <view class="stage-side">
@@ -66,11 +88,16 @@
             <text class="opt-hint">点击即可穿戴 / 试穿</text>
           </view>
           <view class="opt-grid">
-            <view v-for="o in gridOptions" :key="o.kind+':'+o.id" class="opt"
+            <view v-for="o in gridOptions" :key="o._k" class="opt"
                   :class="{ eq: o.equipped, remove: o.remove, char: o.kind==='char' }"
                   @tap="optionClick(o)">
               <view class="opt-media">
+                <!-- #ifndef MP-WEIXIN -->
                 <image v-if="o.thumb" class="opt-img" :src="o.thumb" mode="aspectFit" />
+                <!-- #endif -->
+                <!-- #ifdef MP-WEIXIN -->
+                <thumb-canvas v-if="o.thumbSvg" class="opt-img" :src="o.thumbSvg" :width="84" :height="84" />
+                <!-- #endif -->
                 <view v-else-if="o.color" class="dot" :style="{ background: o.color }"></view>
                 <text v-else-if="o.remove" class="rm-mark">✕</text>
               </view>
@@ -135,7 +162,12 @@
             <text class="slot-empty" v-if="!outfits.length">还没有保存的搭配，快去创造第一套吧 ✨</text>
             <scroll-view scroll-y class="slot-list" v-else>
               <view class="slot" v-for="(o, i) in outfits" :key="i">
-                <image class="slot-img" :src="o.thumb" mode="aspectFit" />
+                <!-- #ifndef MP-WEIXIN -->
+                <image v-if="o.thumb" class="slot-img" :src="o.thumb" mode="aspectFit" />
+                <!-- #endif -->
+                <!-- #ifdef MP-WEIXIN -->
+                <thumb-canvas v-if="o.cfg" class="slot-img" :cfg="o.cfg" :width="46" :height="70" />
+                <!-- #endif -->
                 <view class="slot-mid">
                   <text class="slot-name">{{ o.name }}</text>
                   <text class="slot-time">{{ o.score ? '· ' + o.score + ' 分' : '' }}</text>
@@ -152,12 +184,20 @@
 
         <!-- 衣橱（加载） -->
         <block v-if="modal === 'load'">
-          <view class="m-head"><text class="m-title">📂 我的衣橱</text></view>
+          <view class="m-head">
+            <text class="m-title">📂 我的衣橱</text>
+            <text class="m-sub">点选一套，再点「确定」换上；或「取消」返回</text>
+          </view>
           <view class="m-body">
             <text class="slot-empty" v-if="!outfits.length">衣橱空空如也，先去「保存」几套吧</text>
             <scroll-view scroll-y class="slot-list" v-else>
-              <view class="slot" v-for="(o, i) in outfits" :key="i">
-                <image class="slot-img" :src="o.thumb" mode="aspectFit" />
+              <view class="slot" :class="{ sel: selIdx === i }" v-for="(o, i) in outfits" :key="i" @tap="selIdx = i">
+                <!-- #ifndef MP-WEIXIN -->
+                <image v-if="o.thumb" class="slot-img" :src="o.thumb" mode="aspectFit" />
+                <!-- #endif -->
+                <!-- #ifdef MP-WEIXIN -->
+                <thumb-canvas v-if="o.cfg" class="slot-img" :cfg="o.cfg" :width="46" :height="70" />
+                <!-- #endif -->
                 <view class="slot-mid">
                   <text class="slot-name">{{ o.name }}</text>
                   <text class="slot-time">{{ o.score ? '· ' + o.score + ' 分' : '' }}</text>
@@ -167,18 +207,33 @@
               </view>
             </scroll-view>
           </view>
+          <view class="m-foot wardrobe-foot">
+            <view class="btn" @tap="closeModal">取消</view>
+            <view class="btn primary" @tap="applySelected">确定</view>
+          </view>
         </block>
 
         <!-- 分享 -->
         <block v-if="modal === 'share'">
           <view class="m-head"><text class="m-title">📤 分享我的搭配</text></view>
           <view class="m-body center">
+            <!-- #ifndef MP-WEIXIN -->
             <image v-if="avatarUri" class="share-avatar" :src="avatarUri" mode="widthFix" />
+            <!-- #endif -->
+            <!-- #ifdef MP-WEIXIN -->
+            <thumb-canvas v-if="cfg" class="share-avatar" :cfg="cfg" :width="180" :height="315" />
+            <!-- #endif -->
             <text class="share-line">{{ charName }} 的今日穿搭 · {{ rateInfo.score }} 分</text>
-            <text class="share-tip">已为你整理好分享文案，点击下方按钮复制即可分享</text>
+            <text class="share-tip">点击「确定」分享给好友；或「返回」继续搭配</text>
           </view>
-          <view class="m-foot">
-            <view class="btn primary" @tap="copyShareText">📋 复制分享文案</view>
+          <view class="m-foot share-foot">
+            <view class="btn" @tap="closeModal">返回</view>
+            <!-- #ifndef MP-WEIXIN -->
+            <view class="btn primary" @tap="confirmShare">确定</view>
+            <!-- #endif -->
+            <!-- #ifdef MP-WEIXIN -->
+            <button class="btn primary share-btn" open-type="share">确定</button>
+            <!-- #endif -->
           </view>
         </block>
       </view>
@@ -222,8 +277,24 @@ import {
 import { getJSON, setJSON } from '../../common/storage.js'
 import { saveToCloud, loadFromCloud, mergeStats, reportEvent, isOnline } from '../../common/api.js'
 
+// 微信小程序端 <image> 显示 SVG 不可靠：角色/缩略图改由 Canvas2D 渲染
+// #ifdef MP-WEIXIN
+import CanvasAvatar from '../../components/canvas-avatar.vue'
+import ThumbCanvas from '../../components/thumb-canvas.vue'
+// #endif
+
 const CONFETTI_EMOJI = ['✨', '🎉', '💖', '⭐', '🌸', '🎀', '💫']
 const thumbCache = {} // svg→dataUri 缓存
+
+// 缩略图字段按平台分流：H5/App 用 SVG data-URI（<image>）；MP-WEIXIN 用 SVG 原文（thumb-canvas 画布）
+function thumbOpt(svg) {
+  // #ifdef MP-WEIXIN
+  return { thumbSvg: svg }
+  // #endif
+  // #ifndef MP-WEIXIN
+  return { thumb: th(svg) }
+  // #endif
+}
 
 function th(svg) {
   if (!svg) return ''
@@ -237,6 +308,12 @@ function th(svg) {
 }
 
 export default {
+  components: {
+    // #ifdef MP-WEIXIN
+    CanvasAvatar,
+    ThumbCanvas,
+    // #endif
+  },
   data() {
     return {
       cat: 'top',
@@ -249,6 +326,7 @@ export default {
       gridTitle: '',
       gridOptions: [],
       modal: null,
+      selIdx: -1,
       saveName: '',
       rateInfo: { score: 0, stars: 0, dims: {}, comment: '', tips: [] },
       showIntro: false,
@@ -267,6 +345,12 @@ export default {
   onLoad() {
     this.init()
   },
+  // 微信小程序端「确定」按钮（button open-type="share"）回调
+  onShareAppMessage() {
+    const c = CHARACTERS[this.cfg.charId]
+    const title = '我在「梦幻衣橱」搭配了' + (c ? c.name : '') + '的造型，得了 ' + this.rateInfo.score + ' 分！快来挑战吧～'
+    return { title, path: '/pages/index/index', imageUrl: '/static/background.png' }
+  },
   methods: {
     /* ---------- 初始化 ---------- */
     init() {
@@ -276,8 +360,10 @@ export default {
       this.cfg = load ? deepClone(load.cfg) : defaultCfg('yu')
       this.ach = load && load.ach ? deepClone(load.ach) : { progress: {}, unlocked: [] }
       this.outfits = (load && load.outfits) ? deepClone(load.outfits) : []
-      // 兼容旧 outfits 字段（无缩略图时补算）
+      // 兼容旧 outfits 字段（无缩略图时补算）；MP-WEIXIN 端缩略图由 canvas 实时绘制，无需 data-URI
+      // #ifndef MP-WEIXIN
       this.outfits.forEach(o => { if (!o.thumb) o.thumb = th(avatarSVG(o.cfg, {})) })
+      // #endif
       this.buildRail()
       this.selectCat('top')
       this.refreshStageInfo()
@@ -291,15 +377,15 @@ export default {
       this.persist()
     },
     buildRail() {
-      this.railList = CATEGORIES.map(c => {
-        if (c.sep) return { sep: c.sep }
+      this.railList = CATEGORIES.map((c, i) => {
+        if (c.sep) return { sep: c.sep, _k: 'sep-' + i }
         let count = 0
         if (c.type === 'items') count = catCountOfItems(c.id)
         else if (c.type === 'hair') count = countHair()
         else if (c.type === 'swatch') count = c.colors.length
         else if (c.type === 'eyeShape') count = countEyes()
         else if (c.type === 'char') count = countChars()
-        return { id: c.id, name: c.name, icon: c.icon, type: c.type, count, sep: null }
+        return { id: c.id, name: c.name, icon: c.icon, type: c.type, count, sep: null, _k: c.id }
       })
     },
 
@@ -307,7 +393,9 @@ export default {
     persist() {
       const doc = { cfg: this.cfg, ach: this.ach, outfits: this.outfits, ts: Date.now() }
       setJSON('game', doc)
+      // #ifndef MP-WEIXIN
       this.outfits.forEach(o => { if (!o.thumb) o.thumb = th(avatarSVG(o.cfg, {})) })
+      // #endif
     },
     async cloudPush() {
       this.cloudOk = false; this.cloudText = '同步中…'
@@ -327,7 +415,9 @@ export default {
         this.cfg = deepClone(payload.cfg)
         this.ach = (payload.ach && deepClone(payload.ach)) || this.ach
         this.outfits = deepClone(payload.outfits || this.outfits)
+        // #ifndef MP-WEIXIN
         this.outfits.forEach(o => { if (!o.thumb) o.thumb = th(avatarSVG(o.cfg, {})) })
+        // #endif
         this.refreshStageInfo()
         this.selectCat(this.cat)
         this.persist()
@@ -347,10 +437,14 @@ export default {
       const c = CHARACTERS[this.cfg.charId]
       this.charName = c ? c.name : ''
       this.charDesc = c ? c.desc : ''
+      // #ifndef MP-WEIXIN
       this.avatarUri = th(avatarSVG(this.cfg, {}))
+      // #endif
     },
     refreshAvatar() {
+      // #ifndef MP-WEIXIN
       this.avatarUri = th(avatarSVG(this.cfg, {}))
+      // #endif
     },
 
     /* ---------- 分类 / 选项网格 ---------- */
@@ -369,13 +463,13 @@ export default {
           out.push(this.makeOpt({
             kind: 'item', slot: c.id, id: it.id, label: it.name,
             desc: it.tags.slice(0, 2).map(t => this.tagName(t)).join(' · '),
-            thumb: th(itemThumbSVG(it.id)),
+            ...thumbOpt(itemThumbSVG(it.id)),
             equipped: this.equippedItem(c.id) === it.id,
           }))
         })
       } else if (c.type === 'hair') {
         Object.entries(HAIRSTYLES).forEach(([id, h]) => {
-          out.push(this.makeOpt({ kind: 'hair', id, label: h.name, thumb: th(hairThumbSVG(id)), equipped: this.cfg.hair === id }))
+          out.push(this.makeOpt({ kind: 'hair', id, label: h.name, ...thumbOpt(hairThumbSVG(id)), equipped: this.cfg.hair === id }))
         })
       } else if (c.type === 'swatch') {
         c.colors.forEach((col, i) => {
@@ -383,18 +477,25 @@ export default {
         })
       } else if (c.type === 'eyeShape') {
         EYESHAPES.forEach(e => {
-          out.push(this.makeOpt({ kind: 'eyeShape', id: e.id, label: e.name, thumb: th(eyeShapeThumbSVG(e.id)), equipped: this.cfg.eyeShape === e.id }))
+          out.push(this.makeOpt({ kind: 'eyeShape', id: e.id, label: e.name, ...thumbOpt(eyeShapeThumbSVG(e.id)), equipped: this.cfg.eyeShape === e.id }))
         })
       } else if (c.type === 'char') {
         Object.entries(CHARACTERS).forEach(([id, ch]) => {
           const svg = headThumbSVG({ charId: id, skin: ch.preset.skin, hair: ch.preset.hair, hairColor: ch.preset.hairColor, eyeColor: ch.preset.eyeColor, eyeShape: ch.preset.eyeShape, items: {} })
-          out.push(this.makeOpt({ kind: 'char', id, label: ch.name, desc: ch.desc, thumb: th(svg), equipped: this.cfg.charId === id }))
+          out.push(this.makeOpt({ kind: 'char', id, label: ch.name, desc: ch.desc, ...thumbOpt(svg), equipped: this.cfg.charId === id }))
         })
       }
       this.gridOptions = out
     },
     makeOpt(o) {
       o.remove = !!o.remove
+      // 唯一 key：小程序端 :key 不支持表达式，预生成简单字符串
+      let uid
+      if (o.id != null) uid = o.id
+      else if (o.kind === 'removeItem') uid = 'rm-' + o.slot
+      else if (o.index != null) uid = o.index
+      else uid = o.label || ''
+      o._k = o.kind + '-' + uid
       return o
     },
     tagName(t) { return (TAG_NAMES && TAG_NAMES[t]) ? TAG_NAMES[t] : t },
@@ -527,12 +628,15 @@ export default {
       this.saveName = '搭配 #' + (this.outfits.length + 1)
       this.modal = 'save'
     },
-    openLoad() { this.modal = 'load' },
+    openLoad() { this.selIdx = -1; this.modal = 'load' },
     doSave() {
       if (this.outfits.length >= MAX_OUTFITS) { this.toastMsg('衣橱已满（8 套），请先删除一些'); return }
       const name = (this.saveName || '').trim() || ('搭配 #' + (this.outfits.length + 1))
       const info = scoreOutfit(this.cfg)
-      const rec = { name, cfg: deepClone(this.cfg), score: info.score, time: Date.now(), thumb: th(avatarSVG(this.cfg, {})) }
+      const rec = { name, cfg: deepClone(this.cfg), score: info.score, time: Date.now() }
+      // #ifndef MP-WEIXIN
+      rec.thumb = th(avatarSVG(this.cfg, {}))
+      // #endif
       this.outfits.unshift(rec)
       this.achTrack_('saved', 'inc')
       this.checkNewAch()
@@ -554,8 +658,17 @@ export default {
     },
     delOutfit(i) {
       this.outfits.splice(i, 1)
+      if (this.selIdx === i) this.selIdx = -1
       this.persist()
       this.toastMsg('已删除')
+    },
+    // 衣橱底部「确定」：应用当前点选的一套
+    applySelected() {
+      if (this.selIdx < 0 || !this.outfits[this.selIdx]) {
+        this.toastMsg('请先在衣橱里点选一套')
+        return
+      }
+      this.applyOutfit(this.selIdx)
     },
 
     /* ---------- 评分 / 分享 ---------- */
@@ -584,6 +697,11 @@ export default {
         // H5 兜底
         try { document.execCommand && this.fallbackCopy(text); self.toastMsg('已复制分享文案 ✨') } catch (e) { self.toastMsg('请手动复制这段文字分享') }
       }
+    },
+    // 非小程序端「确定」：复制分享文案并关闭分享弹层
+    confirmShare() {
+      this.copyShareText()
+      this.closeModal()
     },
     fallbackCopy(text) {
       const ta = document.createElement('textarea'); ta.value = text
@@ -776,11 +894,76 @@ export default {
   100% { opacity: 0; transform: translateY(106vh) rotate(360deg); }
 }
 
-/* 窄屏适配 */
+/* 窄屏适配（H5 浏览器小窗 / 平板竖屏） */
 @media (max-width: 860px) {
   .main { flex-direction: column; }
   .rail { width: auto; height: auto; max-height: 120px; display: flex; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid rgba(180,150,200,.2); }
   .rail-item { flex: 0 0 auto; }
   .stage-panel { flex-direction: column; }
 }
+
+/* ===== 分享弹层脚部按钮 ===== */
+.share-foot { padding-top: 2px; }
+.share-foot .btn { min-width: 116px; text-align: center; box-sizing: border-box; }
+/* 清除微信 <button> 原生样式/边框 */
+.btn::after { border: none; }
+.share-btn { margin: 0; line-height: 1.4; }
+
+/* ===== 微信小程序端：按手机尺寸适配（覆盖桌面数值，不依赖 @media） ===== */
+// #ifdef MP-WEIXIN
+.topbar { padding: 6px 10px; gap: 6px 10px; flex-wrap: wrap; }
+.brand-sub { display: none; }
+.brand-name { font-size: 17px; }
+.top-actions { margin-left: auto; gap: 6px; }
+.chip { padding: 5px 11px; font-size: 12px; }
+.cloud-status { font-size: 10px; padding: 3px 8px; }
+.main { flex-direction: column; }
+/* 分类：顶部横向滚动 */
+.mp-rail { width: 100%; height: auto; max-height: none; border-right: none; border-bottom: 1px solid rgba(180,150,200,.25); padding: 5px 6px; white-space: nowrap; }
+.mp-rail .rail-item { display: inline-flex; align-items: center; padding: 6px 11px; gap: 5px; }
+.mp-rail .rail-name { font-size: 13px; white-space: nowrap; }
+.rail-count { display: none; }
+.content { padding: 10px 10px 16px; }
+.stage-panel { flex-direction: column; gap: 6px; padding: 6px 0 0; }
+.stage-wrap { width: 300px; }
+.stage-side { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; min-width: 0; }
+.badge { flex: 1 1 100%; text-align: center; }
+.badge-name { font-size: 18px; }
+.badge-desc { font-size: 12px; }
+.ctl-grid { justify-content: center; }
+.ctl { padding: 8px 14px; font-size: 13px; }
+.ctl-cloud { font-size: 12px; }
+.opt-panel { margin-top: 6px; padding: 10px; }
+.opt-hint { display: none; }
+.opt-grid { gap: 8px; }
+.opt { width: calc((100% - 16px) / 3); min-width: 86px; padding: 4px; }
+.opt.char { width: calc((100% - 16px) / 3); }
+.opt-media { width: 84px; height: 84px; }
+.opt-name { font-size: 12px; }
+.mask, .modal, .intro, .confetti { top: 0; left: 0; right: 0; bottom: 0; }
+.modal { padding: 12px; }
+.modal-card { width: 94vw; max-height: 86vh; }
+.m-head { padding: 14px 16px 4px; }
+.m-title { font-size: 17px; }
+.m-body { padding: 6px 16px 12px; }
+.m-foot { padding: 6px 16px 14px; gap: 8px; }
+.btn { padding: 10px 18px; font-size: 14px; }
+.intro-card { width: 90vw; padding: 22px 16px; }
+.toasts { top: 80px; }
+// #endif
+
+/* ===== 衣橱（我的衣橱弹层）：点选态 + 底部确定/取消 ===== */
+.slot { border: 2px solid transparent; }
+.slot.sel { border-color: #e86ab0; background: #fff4fb; }
+.m-sub { display: block; font-size: 12px; color: #9a86b0; margin-top: 2px; }
+.wardrobe-foot .btn { min-width: 116px; text-align: center; box-sizing: border-box; }
+
+/* 防压缩：舞台/形象与缩略图容器在小屏 flex 布局里不允许被挤压 */
+.stage-wrap, .avatar { flex-shrink: 0; }
+.opt-media { flex-shrink: 0; }
+
+/* 主界面禁止横向滑动/溢出 */
+.page, .main, .content { overflow-x: hidden; }
+/* 衣橱行按钮提到最上层，避免被画布/缩略图覆盖点不到 */
+.slot-btn { position: relative; z-index: 2; }
 </style>

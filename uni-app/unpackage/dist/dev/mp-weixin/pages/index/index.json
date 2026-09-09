@@ -1,5 +1,8 @@
 {
   "navigationBarTitleText": "梦幻衣橱",
   "navigationStyle": "custom",
-  "usingComponents": {}
+  "usingComponents": {
+    "canvas-avatar": "/components/canvas-avatar",
+    "thumb-canvas": "/components/thumb-canvas"
+  }
 }

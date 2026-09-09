@@ -21,7 +21,8 @@ export default {
     return { cid: '' }
   },
   computed: {
-    boxStyle() { return { width: this.width + 'px', height: this.height + 'px' } },
+    // 用字符串内联样式确保宽高一定生效（对象样式在个别小程序端可能丢失 → canvas 退回默认 300 宽被压扁）
+    boxStyle() { return 'width:' + this.width + 'px;height:' + this.height + 'px;display:block;' },
   },
   created() {
     this.cid = 'cav' + Math.random().toString(36).slice(2, 8)
@@ -58,5 +59,5 @@ export default {
 </script>
 
 <style scoped>
-.cav { display: block; }
+.cav { display: block; flex-shrink: 0; }
 </style>
