@@ -1,26 +1,39 @@
 {
-  "name": "梦幻衣橱",
-  "appid": "",
-  "description": "uni-app 换装游戏（SVG 渲染，H5/App 目标）",
-  "versionName": "1.0.0",
-  "versionCode": "100",
-  "transformPx": false,
-  "app-plus": {
-    "usingComponents": true,
-    "nvueStyleCompiler": "uni-app",
-    "compilerVersion": 3,
-    "splashscreen": { "alwaysShowBeforeRender": true, "waiting": true, "autoclose": true, "delay": 0 }
-  },
-  "quickapp": {},
-  "mp-weixin": {
-    "appid": "",
-    "setting": { "urlCheck": false, "es6": true, "postcss": true, "minified": true },
-    "usingComponents": true
-  },
-  "h5": {
-    "title": "梦幻衣橱",
-    "router": { "mode": "hash" },
-    "sdkConfigs": {}
-  },
-  "vueVersion": "2"
+    "name" : "梦幻衣橱",
+    "appid" : "__UNI__ED0696F",
+    "description" : "uni-app 换装游戏（SVG 渲染，H5/App 目标）",
+    "versionName" : "1.0.0",
+    "versionCode" : "100",
+    "transformPx" : false,
+    "app-plus" : {
+        "usingComponents" : true,
+        "nvueStyleCompiler" : "uni-app",
+        "compilerVersion" : 3,
+        "splashscreen" : {
+            "alwaysShowBeforeRender" : true,
+            "waiting" : true,
+            "autoclose" : true,
+            "delay" : 0
+        }
+    },
+    "quickapp" : {},
+    "mp-weixin" : {
+        "appid" : "",
+        "setting" : {
+            "urlCheck" : false,
+            "es6" : true,
+            "postcss" : true,
+            "minified" : true
+        },
+        "usingComponents" : true
+    },
+    "h5" : {
+        "title" : "梦幻衣橱",
+        "router" : {
+            "mode" : "hash"
+        },
+        "sdkConfigs" : {}
+    },
+    "vueVersion" : "2",
+    "locale" : "zh-Hans"
 }

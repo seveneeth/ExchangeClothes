@@ -52,8 +52,20 @@ uni-app/
 
 先在 `backend/` 按 [`../backend/README.md`](../backend/README.md) 启动服务。
 
-## 关于微信小程序端
+## 关于微信小程序端（Canvas 渲染，进行中）
 
-`<image>`/`cover-image` **不支持 SVG**，因此本版面向 H5/App 运行（`manifest.json` 默认 `vueVersion: "2"`）。
-如需编译到微信小程序，需将 `avatar.js` 的渲染改为 Canvas 2D 绘制，或用位图贴图——建议后续以 `avatar.js`
-现有几何逻辑为基准再做一层 Canvas 适配。
+`<image>`/`cover-image` **不支持 SVG**，因此小程序端需要用 Canvas 重绘。当前进展：
+
+- `common/svg2canvas.js`：轻量 SVG→Canvas2D 解释器。复用 `avatar.js` 生成的同一段 SVG 字符串，
+  解析后画到标准 2d `ctx`（支持 path/circle/ellipse/rect/line、linearGradient、rotate、M/L/C/Q/A/Z+q）。
+  已用 Node mock 全量验证：6 角色 / 51 物品 / 11 发型 / 弧线帽饰 / d6 渐变裙均无错、无 NaN。
+- `common/canvasctx.js`：跨端获取 `<canvas type="2d">` 标准 2D 上下文（H5 与 mp-weixin）。
+- `components/canvas-avatar.vue`：把 `cfg` 形象画到 `<canvas type="2d">` 的可复用组件（mp-weixin 的渲染入口）。
+- `pages/ab/ab.vue`：A/B 校验页，右栏即用 `canvas-avatar` 组件绘制，可在 H5 对照左侧 SVG `<image>` 检查解释器是否正确。
+
+待办（依赖在 H5/开发者工具实际跑起来对照，才能逐像素收敛）：
+1. 用 H5 打开「🎨 A/B」，确认右栏 Canvas 与左栏 SVG 视觉一致；把不一致项反馈给作者迭代 svg2canvas。
+2. 把主游戏 `pages/index/index.vue` 的舞台形象在 **mp-weixin** 下改用 `canvas-avatar`（H5 仍可用 `<image>`）。
+3. 选项缩略图在 mp-weixin 端也需转成 PNG/Canvas（mp `<image>` 不认 SVG），方案为离屏 canvas 栅格化后用 `<image>` 显示。
+
+本地/云端存档均不受平台影响（见上文）。

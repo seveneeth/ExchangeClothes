@@ -12,6 +12,7 @@
         <view class="chip" @tap="openAch">🏆 成就</view>
         <view class="chip" @tap="share">📤 分享</view>
         <view class="chip" @tap="openHelp">❓ 玩法</view>
+        <view class="chip" @tap="goAb">🎨 A/B</view>
       </view>
       <view class="cloud-status" :class="cloudOk?'on':'off'">{{ cloudText }}</view>
     </view>
@@ -590,6 +591,10 @@ export default {
     /* ---------- 成就 / 玩法 ---------- */
     openAch() { this.modal = 'ach' },
     openHelp() { this.showIntro = true },
+    goAb() {
+      if (typeof uni !== 'undefined' && uni.navigateTo) uni.navigateTo({ url: '/pages/ab/ab' })
+      else location.href = '#/pages/ab/ab'
+    },
     startGame() {
       this.showIntro = false
       setJSON('seen', true)

@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/ab/ab"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "梦幻衣橱",
+    "navigationBarBackgroundColor": "#fff5f9",
+    "backgroundColor": "#fff5f9"
+  },
+  "usingComponents": {}
+}

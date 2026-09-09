@@ -1,0 +1,15 @@
+
+
+
+
+
+
+
+
+
+/* 全局样式（非 scoped，供各页使用） */
+page {
+  background: #fff5f9;
+  height: 100%;
+}
+

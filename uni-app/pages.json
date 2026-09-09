@@ -7,6 +7,13 @@
         "navigationStyle": "custom",
         "app-plus": { "bounce": "none" }
       }
+    },
+    {
+      "path": "pages/ab/ab",
+      "style": {
+        "navigationBarTitleText": "A/B 渲染校验",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {
