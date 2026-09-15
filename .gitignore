@@ -12,11 +12,10 @@ backend/data/
 *.sqlite*
 warn/
 
-# --- 微信开发者工具私有配置 ---
 project.private.config.json
 uni-app/project.private.config.json
 
-# --- 构建产物 / 依赖 ---
+
 uni-app/unpackage/
 backend/.venv/
 .venv/
