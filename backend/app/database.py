@@ -1,4 +1,4 @@
-"""云端数据存储层：去掉 SQLite，改为“每用户一个 JSON 文件”。
+"""云端数据存储层：每用户一个 JSON 文件”。
 
 位置：backend/userdata/<uid>.json（可用环境变量 USERDATA_DIR 覆盖）。
 

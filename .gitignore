@@ -2,3 +2,25 @@ backend/.venv
 backend/.env.md
 backend/requirements.txt
 
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/userdata/*
+!backend/userdata/.gitkeep
+backend/data/
+*.db
+*.sqlite*
+warn/
+
+# --- 微信开发者工具私有配置 ---
+project.private.config.json
+uni-app/project.private.config.json
+
+# --- 构建产物 / 依赖 ---
+uni-app/unpackage/
+backend/.venv/
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
